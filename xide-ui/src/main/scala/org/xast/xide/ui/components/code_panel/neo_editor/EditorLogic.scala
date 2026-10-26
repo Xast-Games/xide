@@ -1,19 +1,7 @@
 package org.xast.xide.ui.components.code_panel.neo_editor
 
 import org.xast.xide.ui.components.code_panel.neo_editor.EditorAction.*
-
-// FIXME: move to utils after scala rewrite
-extension [A](value: A)
-   infix def |>[B](f: A => B): B = f(value)
-
-def when[A](pred: A => Boolean, f: A => A)(value: A): A =
-   if pred(value) then f(value) else value
-
-def whenElse[A](pred: A => Boolean, f: A => A, elseF: A => A)(value: A): A =
-   if pred(value) then f(value) else elseF(value)
-
-def unless[A](pred: A => Boolean, f: A => A)(value: A): A =
-   if !pred(value) then f(value) else value
+import org.xast.xide.core.utils.*
 
 type Effectful[T] = (T, List[Effect])
 

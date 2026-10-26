@@ -14,6 +14,7 @@ import org.xast.xide.core.event.EventBus;
 import org.xast.xide.core.event.EventHandler;
 import org.xast.xide.core.event.FileOpenRequestedEvent;
 import org.xast.xide.core.event.WorkspaceChangedEvent;
+import org.xast.xide.core.log.Log;
 
 import lombok.Getter;
 
@@ -76,7 +77,7 @@ public class RecentWorkspaces implements EventHandler {
                     .toList()
             );
         } catch (IOException e) {
-            Debug.error("Cannot save recent workspaces to `"+RECENT_FILE+"`: "+e);
+            Log.error("Cannot save recent workspaces to `"+RECENT_FILE+"`: "+e);
         }    
     }
 
@@ -87,13 +88,13 @@ public class RecentWorkspaces implements EventHandler {
             try {
                 Files.createFile(path);
             } catch (IOException e) {
-                Debug.error("Cannot create `"+RECENT_FILE+"`: "+e);
+                Log.error("Cannot create `"+RECENT_FILE+"`: "+e);
                 return;
             }
         }
 
         if (!file.isFile()) {
-            Debug.error("`"+RECENT_FILE+"` is not a file");
+            Log.error("`"+RECENT_FILE+"` is not a file");
             return;
         }
 
@@ -116,7 +117,7 @@ public class RecentWorkspaces implements EventHandler {
                 }
             }
         } catch (IOException e) {
-            Debug.error("Cannot read `"+RECENT_FILE+"`: "+e);
+            Log.error("Cannot read `"+RECENT_FILE+"`: "+e);
         }
     }
 

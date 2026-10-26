@@ -21,4 +21,12 @@ dependencies {
     implementation(libs.org.scala.lang.scala3.library)
 }
 
+// Joint compilation: scalac reads the Java sources too, so Java code here can use Scala classes
+sourceSets {
+    main {
+        scala.setSrcDirs(listOf("src/main/scala", "src/main/java"))
+        java.setSrcDirs(emptyList<String>())
+    }
+}
+
 description = "xide-core"

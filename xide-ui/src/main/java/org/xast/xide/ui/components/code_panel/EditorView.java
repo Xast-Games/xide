@@ -20,7 +20,7 @@ import org.xast.xide.core.event.FileSaveRequestedEvent;
 import org.xast.xide.core.plugin.file.FileModel;
 import org.xast.xide.core.plugin.file.TextFileModel;
 import org.xast.xide.core.plugin.ui.CodePanelView;
-import org.xast.xide.core.utils.Debug;
+import org.xast.xide.core.log.Log;
 import org.xast.xide.ui.utils.SyntaxStyle;
 import org.xast.xide.ui.utils.XideStyle;
 
@@ -46,7 +46,7 @@ public class EditorView extends CodePanelView {
             try {
                 content = Files.readString(file.toPath());
             } catch (IOException e) { 
-                Debug.error("Cannot read file `"+file.getName()+"`: "+e.getMessage());
+                Log.error("Cannot read file `"+file.getName()+"`: "+e.getMessage());
             }
         }
 
@@ -62,7 +62,7 @@ public class EditorView extends CodePanelView {
 
             theme.apply(textArea);
         } catch (IOException e) {
-            Debug.error("Failed to load editor theme: " + e.getMessage());
+            Log.error("Failed to load editor theme: " + e.getMessage());
         }
 
         textArea.setSyntaxEditingStyle(syntaxStyle.getMimeType());

@@ -29,7 +29,8 @@ public enum LucideIcon {
     ELLIPSIS_VERTICAL("ellipsis-vertical"),
     SUN_MOON("sun-moon"),
     BOXES("boxes"),
-    SEARCH("search");
+    SEARCH("search"),
+    TRIANGLE_ALERT("triangle-alert");
 
     private static final Map<String, FlatSVGIcon> BASE_CACHE = new HashMap<>();
 

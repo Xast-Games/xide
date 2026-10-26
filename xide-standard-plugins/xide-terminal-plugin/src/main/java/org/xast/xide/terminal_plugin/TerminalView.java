@@ -16,7 +16,7 @@ import org.xast.xide.core.event.EventBus;
 import org.xast.xide.core.event.EventHandler;
 import org.xast.xide.core.event.WorkspaceChangedEvent;
 import org.xast.xide.core.plugin.bottom.BottomPanelView;
-import org.xast.xide.core.utils.Debug;
+import org.xast.xide.core.log.Log;
 import org.xast.xide.ui.utils.XideStyle;
 
 import javax.swing.*;
@@ -92,7 +92,7 @@ public class TerminalView extends BottomPanelView implements EventHandler {
 
             SwingUtilities.invokeLater(this::updateTerminalSize);
         } catch (IOException e) {
-            Debug.error("Cannot initialize terminal: "+e.getMessage());
+            Log.error("Cannot initialize terminal: "+e.getMessage());
         }
     }
 
@@ -138,7 +138,7 @@ public class TerminalView extends BottomPanelView implements EventHandler {
             
             process.getOutputStream().flush();
         } catch (IOException e) {
-            Debug.error("Cannot set terminal folder: " + e.getMessage());
+            Log.error("Cannot set terminal folder: " + e.getMessage());
         }
     }
 

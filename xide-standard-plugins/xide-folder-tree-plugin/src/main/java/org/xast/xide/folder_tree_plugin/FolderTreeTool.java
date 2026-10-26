@@ -22,7 +22,7 @@ import org.xast.xide.core.event.FileSystemChangedEvent;
 import org.xast.xide.core.event.WorkspaceChangedEvent;
 import org.xast.xide.core.plugin.tool.Tool;
 import org.xast.xide.core.plugin.ui.SideBarContext;
-import org.xast.xide.core.utils.Debug;
+import org.xast.xide.core.log.Log;
 import org.xast.xide.folder_tree_plugin.components.FolderTreeView;
 
 public class FolderTreeTool implements Tool, EventHandler {
@@ -86,7 +86,7 @@ public class FolderTreeTool implements Tool, EventHandler {
                 watchService.get().close();
                 watchService = Optional.empty();
             } catch (IOException e) {
-                Debug.error("Cannot close file system watch service: " + e.getMessage());
+                Log.error("Cannot close file system watch service: " + e.getMessage());
             } catch (ClosedWatchServiceException e) {
                 Thread.currentThread().interrupt();
             }
@@ -104,7 +104,7 @@ public class FolderTreeTool implements Tool, EventHandler {
             watchService = Optional.of(FileSystems.getDefault().newWatchService());
             registerDirectory(dir.get().toPath());
         } catch (IOException e) {
-            Debug.error("Cannot handle file system watch service: " + e.getMessage());
+            Log.error("Cannot handle file system watch service: " + e.getMessage());
             watchService = Optional.empty();
         }
     }
@@ -156,7 +156,7 @@ public class FolderTreeTool implements Tool, EventHandler {
                             try {
                                 registerDirectory(changedAbsolute);
                             } catch (IOException e) {
-                                Debug.error("Cannot register new directory: " + changedAbsolute + " -> " + e.getMessage());
+                                Log.error("Cannot register new directory: " + changedAbsolute + " -> " + e.getMessage());
                             }
                         }
 
@@ -203,7 +203,7 @@ public class FolderTreeTool implements Tool, EventHandler {
             try {
                 watchService.get().close();
             } catch (IOException e) {
-                Debug.error("Cannot close file system watch service: " + e.getMessage());
+                Log.error("Cannot close file system watch service: " + e.getMessage());
             }
             watchService = Optional.empty();
         }
@@ -219,7 +219,7 @@ public class FolderTreeTool implements Tool, EventHandler {
         try {
             registerDirectory(directory.toPath());
         } catch (IOException e) {
-            Debug.error("Cannot register expanded directory: " + directory + " -> " + e.getMessage());
+            Log.error("Cannot register expanded directory: " + directory + " -> " + e.getMessage());
         }
     }
 }

@@ -1,160 +1,122 @@
 package org.xast.xide.logs_plugin
 
+import org.xast.xide.core.log.{Log, LogEntry, LogLevel}
 import org.xast.xide.core.plugin.bottom.BottomPanelView
 import org.xast.xide.ui.utils.XideStyle
+import org.xast.xide.logs_plugin.LogTableModel.Column
 
-import java.awt.{BorderLayout, Color}
-import java.util.concurrent.LinkedBlockingQueue
-import java.io.PrintStream
-import java.nio.charset.StandardCharsets
-import java.util.regex.Pattern
-import javax.swing.{Timer, UIManager, BorderFactory}
+import java.awt.{BorderLayout, Font}
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.{RowFilter, SwingUtilities}
+import javax.swing.table.TableRowSorter
 
-import scala.collection.mutable.ArrayBuffer
-import scala.jdk.CollectionConverters.*
 import scala.swing.*
-import javax.swing.SwingUtilities
+import scala.swing.event.{ButtonClicked, SelectionChanged}
 
-object LogsView {
-    val MAX_LINES = 1000
-    val FLUSH_INTER_MS = 500
-    val ANSI_REGEX = Pattern.compile("\u001B\\[[\\d]*m")
-}
+object LogsView:
+    val timeColumnWidth  = 110
+    val levelColumnWidth = 90
+    val rowPadding       = 6
 
-class LogsView extends BottomPanelView:
-    
-    private val list      = new ListView[LogLine]()
-    private val allLines  = new ArrayBuffer[LogLine]()
-    private val channel   = new LinkedBlockingQueue[LogLine]()
-    private val timer     = new Timer(LogsView.FLUSH_INTER_MS, _ => flush())
-    private var showOut   = true
-    private var showErr   = true
+class LogsView extends BottomPanelView, Reactor:
+    import LogsView.*
 
-    setLayout(BorderLayout())
+    if !SwingUtilities.isEventDispatchThread then
+        throw IllegalStateException("Create LogsView on the Swing EDT")
 
-    val style = XideStyle.getCurrent
-    val bgColor = UIManager.getColor("TextArea.background")
-    val fgColor = UIManager.getColor("Label.foreground")
+    private val service          = Log
+    private val model            = LogTableModel()
+    private val table            = Table(model)
+    private val sorter           = TableRowSorter[LogTableModel](model)
+    private val refreshScheduled = AtomicBoolean()
+    private val logListener      = () => scheduleRefresh()
 
-    list.background = bgColor
-    list.renderer = new LogListRenderer()
+    private val levelOptions: Seq[Option[LogLevel]] =
+        None +: LogLevel.values.toSeq.map(Some(_))
 
-    // Scroll pane
-    val scrollPane = new ScrollPane {
-        contents = list
-        border = BorderFactory.createMatteBorder(
-            1, 0, 0, 0,
-            Color(0x424242)
+    private val levelFilter = ComboBox(levelOptions)
+
+    levelFilter.renderer = ListView.Renderer {
+        case None        => "All"
+        case Some(level) => level.toString
+    }
+
+    private val clearButton = Button("Clear")(())
+
+    setLayout(BorderLayout(0, 6))
+
+    private val style = XideStyle.getCurrent
+
+    add(buildToolbar(style.uiFont).peer, BorderLayout.NORTH)
+    add(ScrollPane(configureTable(style.uiFont)).peer, BorderLayout.CENTER)
+
+    listenTo(levelFilter.selection, clearButton)
+
+    reactions += {
+        case SelectionChanged(`levelFilter`) => filterByLevel(levelFilter.selection.item)
+        case ButtonClicked(`clearButton`)    => service.clear()
+    }
+
+    override def addNotify(): Unit =
+        super.addNotify()
+        service.addListener(logListener)
+        refresh()
+
+    override def removeNotify(): Unit =
+        service.removeListener(logListener)
+        super.removeNotify()
+
+    private def buildToolbar(font: Font): FlowPanel =
+        val toolbar = new FlowPanel(FlowPanel.Alignment.Leading)(
+            Label("Level:"),
+            levelFilter,
+            clearButton,
+        ):
+            hGap = 8
+            vGap = 2
+
+        toolbar.contents.foreach(_.font = font)
+        toolbar
+
+    private def configureTable(font: Font): Table =
+        table.font = font
+        table.peer.getTableHeader.setFont(font)
+        table.peer.getTableHeader.setReorderingAllowed(false)
+        table.rowHeight = table.peer.getFontMetrics(font).getHeight + rowPadding
+        table.autoResizeMode = Table.AutoResizeMode.LastColumn
+        table.selection.intervalMode = Table.IntervalMode.Single
+        table.peer.setFillsViewportHeight(true)
+
+        sorter.setComparator(Column.Level.ordinal, Ordering.by[LogEntry, Int](_.level.ordinal))
+        table.peer.setRowSorter(sorter)
+
+        table.peer.setDefaultRenderer(classOf[LogEntry], LogLevelRenderer().peer)
+
+        fixColumnWidth(Column.Time, timeColumnWidth)
+        fixColumnWidth(Column.Level, levelColumnWidth)
+        table
+
+    private def fixColumnWidth(column: Column, width: Int): Unit =
+        val tableColumn = table.peer.getColumnModel.getColumn(column.ordinal)
+        tableColumn.setMinWidth(width)
+        tableColumn.setMaxWidth(width)
+        tableColumn.setPreferredWidth(width)
+
+    private def filterByLevel(selected: Option[LogLevel]): Unit =
+        sorter.setRowFilter(selected match
+            case Some(level) =>
+                new RowFilter[LogTableModel, Integer]:
+                    override def include(entry: RowFilter.Entry[? <: LogTableModel, ? <: Integer]): Boolean =
+                        entry.getModel.entryAt(entry.getIdentifier).level == level
+            case None => null
         )
-    }
-    // TODO: replace later with `content +=`
-    add(scrollPane.peer, BorderLayout.CENTER)
 
-    // Top bar
-    val stdOutCheckbox = new CheckBox("StdOut") {
-        selected = showOut
-        font = style.uiFont
-    };
+    private def scheduleRefresh(): Unit =
+        if refreshScheduled.compareAndSet(false, true) then
+            SwingUtilities.invokeLater(() =>
+                refreshScheduled.set(false)
+                refresh()
+            )
 
-    val stdErrCheckbox = new CheckBox("StdErr") {
-        selected = showErr
-        font = style.uiFont
-    }
-
-    val clearButton = new Button("Clear") {
-        foreground = fgColor
-        font = style.uiFont
-    }
-
-    val topBar = new BoxPanel(Orientation.Horizontal) {
-        border = BorderFactory.createEmptyBorder(4, 0, 4, 0)
-
-        contents += stdOutCheckbox
-        contents += Swing.HStrut(8)
-        contents += stdErrCheckbox
-        contents += Swing.HStrut(8)
-        contents += clearButton
-    }
-
-    // TODO: replace later with `listenTo(stdOutCheckBox)` and `reactions += {...}`
-    stdOutCheckbox.peer.addActionListener(_ => 
-        showOut = stdOutCheckbox.selected
-        rebuildVisibleLines()
-    )
-
-    stdErrCheckbox.peer.addActionListener(_ => 
-        showErr = stdErrCheckbox.selected
-        rebuildVisibleLines()
-    )
-
-    clearButton.peer.addActionListener(_ =>
-        channel.clear()
-        allLines.clear()
-        list.listData = Seq.empty  
-    )
-
-    add(topBar.peer, BorderLayout.NORTH)
-
-    // Print stream
-    System.setOut(new PrintStream(
-        ConsoleRedirectStream(this, false),
-        true,
-        StandardCharsets.UTF_8
-    ))
-
-    System.setErr(new PrintStream(
-        ConsoleRedirectStream(this, true),
-        true,
-        StandardCharsets.UTF_8
-    ))
-
-    // Start flush timer
-    timer.start()
-
-    SwingUtilities.invokeLater(() =>
-        println("Sasi")
-    )
-
-    def addLine(text: String, error: Boolean) = 
-        channel.offer(LogLine(text, error))
-
-    private def flush() =
-        val batch = new ArrayBuffer[LogLine]()
-
-        channel.drainTo(batch.asJava)
-
-        if batch.nonEmpty then
-            flushBatch(batch)
-
-    private def flushBatch(batch: ArrayBuffer[LogLine]) =
-        allLines.addAll(batch)
-
-        val overflow = allLines.size - LogsView.MAX_LINES
-        val trimmed = overflow > 0
-        
-        if trimmed then 
-            allLines.remove(0, overflow)
-
-        if trimmed then
-            rebuildVisibleLines()
-        else
-            appendVisibleLines(batch)
-
-    private def appendVisibleLines(lines: ArrayBuffer[LogLine]) =
-        val shownLines = lines.filter(shouldShow)
-        list.listData = list.listData.appendedAll(shownLines)
-
-        if list.listData.nonEmpty then
-            list.ensureIndexIsVisible(list.listData.size - 1)
-
-    private def rebuildVisibleLines() =
-        list.listData = allLines.filter(shouldShow).toSeq
-
-        if list.listData.nonEmpty then
-            list.ensureIndexIsVisible(list.listData.size - 1)
-
-    private def shouldShow(line: LogLine): Boolean =
-        if line.isError then showErr else showOut
-
-def stripAnsi(text: String): String =
-    LogsView.ANSI_REGEX.matcher(text).replaceAll("")
+    private def refresh(): Unit =
+        model.setEntries(service.logEntries)

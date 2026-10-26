@@ -10,7 +10,7 @@ import org.xast.xide.core.event.FileSaveRequestedEvent
 import org.xast.xide.core.plugin.file.FileModel
 import org.xast.xide.core.plugin.file.TextFileModel
 import org.xast.xide.core.plugin.ui.CodePanelView
-import org.xast.xide.core.utils.Debug
+import org.xast.xide.core.log.Log
 
 class EditorView(val eventBus: EventBus, val file: File) extends CodePanelView:
    
@@ -26,7 +26,7 @@ class EditorView(val eventBus: EventBus, val file: File) extends CodePanelView:
          content = Files.readString(file.toPath())
       catch
          case e: IOException =>
-            Debug.error("Cannot read file `" + file.getName() + "`: " + e.getMessage())
+            Log.error("Cannot read file `" + file.getName() + "`: " + e.getMessage())
 
    editorStatus = new EditorStatus()
    add(editorStatus.peer, BorderLayout.SOUTH)

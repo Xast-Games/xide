@@ -8,7 +8,12 @@ class MutablePieceTable(val content: String):
 
    private val originalBuffer: String   = content
    private var addBuffer: String        = ""
-   private var pieceHead: Option[Piece] = Some(new Piece(0, content.length, Source.Original, None))
+   private var pieceHead: Option[Piece] = Some(new Piece(
+      offset = 0, 
+      length = content.length, 
+      source = Source.Original, 
+      next   = None,
+   ))
    private val lineCache: ArrayBuffer[String] = computeLines()
    private val pending: ArrayBuffer[Edit] = ArrayBuffer[Edit]()
    private var recording = true

@@ -8,7 +8,7 @@ import java.util.Map;
 import org.xast.xide.core.plugin.bottom.BottomPanelPlugin;
 import org.xast.xide.core.plugin.file.FilePlugin;
 import org.xast.xide.core.plugin.tool.ToolPlugin;
-import org.xast.xide.core.utils.Debug;
+import org.xast.xide.core.log.Log;
 
 import lombok.Getter;
 
@@ -34,7 +34,7 @@ public class PluginRegistry {
         
         for (String ext : exts) {
             if (filePlugins.containsKey(ext)) {
-                Debug.error("File plugin for extension `" + ext + "` already registered");
+                Log.error("File plugin for extension `" + ext + "` already registered");
                 continue;
             }
 

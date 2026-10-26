@@ -8,4 +8,4 @@ class LogsPlugin extends BottomPanelPlugin:
     
     override def tabName: String = "Logs"
 
-    override def view(eventBus: EventBus): BottomPanelView = new LogsView()
+    override def view(eventBus: EventBus): BottomPanelView = LogsView()

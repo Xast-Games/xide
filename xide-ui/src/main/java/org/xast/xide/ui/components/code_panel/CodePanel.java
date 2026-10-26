@@ -17,7 +17,7 @@ import org.xast.xide.core.event.FileSaveRequestedEvent;
 import org.xast.xide.core.event.TabCloseRequestedEvent;
 import org.xast.xide.core.plugin.file.FilePlugin;
 import org.xast.xide.core.plugin.ui.CodePanelView;
-import org.xast.xide.core.utils.Debug;
+import org.xast.xide.core.log.Log;
 import org.xast.xide.ui.utils.SyntaxStyle;
 import org.xast.xide.ui.utils.XideStyle;
 
@@ -123,7 +123,7 @@ public class CodePanel extends JPanel implements EventHandler {
             try {
                 view.get().model().saveToFile(file);
             } catch (IOException e) {
-                Debug.error("Cannot save file `" + file.getName() + "`: " + e.getMessage());
+                Log.error("Cannot save file `" + file.getName() + "`: " + e.getMessage());
                 return;
             }
 
@@ -151,7 +151,7 @@ public class CodePanel extends JPanel implements EventHandler {
                 try {
                     view.get().model().saveToFile(file);
                 } catch (IOException e) {
-                    Debug.error("Cannot save file `" + file.getName() + "`: " + e.getMessage());
+                    Log.error("Cannot save file `" + file.getName() + "`: " + e.getMessage());
                     continue;
                 }
 

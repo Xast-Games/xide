@@ -16,7 +16,7 @@ import org.xast.xide.core.config.ConfigValue.IntValue;
 import org.xast.xide.core.config.ConfigValue.StringArrayValue;
 import org.xast.xide.core.config.ConfigValue.StringValue;
 import org.xast.xide.core.event.EventBus;
-import org.xast.xide.core.utils.Debug;
+import org.xast.xide.core.log.Log;
 
 import com.moandjiezana.toml.Toml;
 import com.moandjiezana.toml.TomlWriter;
@@ -51,11 +51,11 @@ public class XideConfig {
             try {
                 return XideConfig.fromToml(eventBus, new Toml().read(configFile));
             } catch (IllegalStateException e) {
-                Debug.error("Current config is not a valid TOML: " + e.getMessage());
+                Log.error("Current config is not a valid TOML: " + e.getMessage());
                 currentConfig = XideConfig.fromToml(eventBus, new Toml());
             }
         } else {
-            Debug.warn("Current config doesn't exist. Creating empty one...");
+            Log.warn("Current config doesn't exist. Creating empty one...");
             currentConfig = XideConfig.fromToml(eventBus, new Toml());
         }
 
@@ -63,14 +63,14 @@ public class XideConfig {
             Files.createDirectories(path.getParent());
             Files.createFile(path);
         } catch (IOException e) {
-            Debug.warn("Failed to create config file: " + e.getMessage());
+            Log.warn("Failed to create config file: " + e.getMessage());
         }
 
         try {
             TomlWriter writer = new TomlWriter();
             writer.write(XideConfigDto.fromSolid(currentConfig), configFile);
         } catch (IOException e) {
-            Debug.error("Failed to save config file: " + e.getMessage());
+            Log.error("Failed to save config file: " + e.getMessage());
         }
 
         return currentConfig;
@@ -82,7 +82,7 @@ public class XideConfig {
             TomlWriter writer = new TomlWriter();
             writer.write(XideConfigDto.fromSolid(this), configFile);
         } catch (IOException e) {
-            Debug.error("Failed to save config file: " + e.getMessage());
+            Log.error("Failed to save config file: " + e.getMessage());
         }
     }
 
@@ -102,25 +102,25 @@ public class XideConfig {
     }
 
     public void debug() {
-        Debug.info("Current config:");
+        Log.info("Current config:");
         fields.forEach((sectionName, section) -> {
-            Debug.info("[" + sectionName + "]");
+            Log.info("[" + sectionName + "]");
             section.forEach((recordName, record) -> {
-                Debug.info(recordName + " = " + record.getValue().toString() + " # " + record.getDescription());
+                Log.info(recordName + " = " + record.getValue().toString() + " # " + record.getDescription());
             });
         });
     }
 
     public boolean getBoolean(String sectionName, String recordName, boolean defaultVal) {
         if (!fields.containsKey(sectionName)) {
-            Debug.warn("No config section `"+sectionName+"`");
+            Log.warn("No config section `"+sectionName+"`");
             return defaultVal;
         }
 
         var section = fields.get(sectionName);
 
         if (!section.containsKey(recordName)) {
-            Debug.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
+            Log.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
             return defaultVal;
         }
 
@@ -129,21 +129,21 @@ public class XideConfig {
         if (record.getValue() instanceof BooleanValue bool) {
             return bool.value();
         } else {
-            Debug.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not a boolean");
+            Log.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not a boolean");
             return defaultVal;
         }
     }
 
     public String getString(String sectionName, String recordName, String defaultVal) {
         if (!fields.containsKey(sectionName)) {
-            Debug.warn("No config section `"+sectionName+"`");
+            Log.warn("No config section `"+sectionName+"`");
             return defaultVal;
         }
 
         var section = fields.get(sectionName);
 
         if (!section.containsKey(recordName)) {
-            Debug.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
+            Log.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
             return defaultVal;
         }
 
@@ -152,21 +152,21 @@ public class XideConfig {
         if (record.getValue() instanceof StringValue string) {
             return string.value();
         } else {
-            Debug.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not a string");
+            Log.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not a string");
             return defaultVal;
         }
     }
 
     public int getInt(String sectionName, String recordName, int defaultVal) {
         if (!fields.containsKey(sectionName)) {
-            Debug.warn("No config section `"+sectionName+"`");
+            Log.warn("No config section `"+sectionName+"`");
             return defaultVal;
         }
 
         var section = fields.get(sectionName);
 
         if (!section.containsKey(recordName)) {
-            Debug.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
+            Log.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
             return defaultVal;
         }
 
@@ -175,21 +175,21 @@ public class XideConfig {
         if (record.getValue() instanceof IntValue integer) {
             return integer.value();
         } else {
-            Debug.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not an int");
+            Log.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not an int");
             return defaultVal;
         }
     }
 
     public float getFloat(String sectionName, String recordName, float defaultVal) {
         if (!fields.containsKey(sectionName)) {
-            Debug.warn("No config section `"+sectionName+"`");
+            Log.warn("No config section `"+sectionName+"`");
             return defaultVal;
         }
 
         var section = fields.get(sectionName);
 
         if (!section.containsKey(recordName)) {
-            Debug.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
+            Log.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
             return defaultVal;
         }
 
@@ -198,21 +198,21 @@ public class XideConfig {
         if (record.getValue() instanceof FloatValue f) {
             return f.value();
         } else {
-            Debug.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not a float");
+            Log.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not a float");
             return defaultVal;
         }
     }
 
     public String[] getStringArray(String sectionName, String recordName, String[] defaultVal) {
         if (!fields.containsKey(sectionName)) {
-            Debug.warn("No config section `"+sectionName+"`");
+            Log.warn("No config section `"+sectionName+"`");
             return defaultVal;
         }
 
         var section = fields.get(sectionName);
 
         if (!section.containsKey(recordName)) {
-            Debug.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
+            Log.warn("No config record `"+recordName+"` in section `"+sectionName+"`");
             return defaultVal;
         }
 
@@ -221,7 +221,7 @@ public class XideConfig {
         if (record.getValue() instanceof StringArrayValue strings) {
             return strings.value();
         } else {
-            Debug.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not a string array");
+            Log.warn("Config record `"+recordName+"` in section `"+sectionName+"` is not a string array");
             return defaultVal;
         }
     }
@@ -308,7 +308,7 @@ public class XideConfig {
 
         public Optional<ConfigField> toSolid(EventBus eventBus) {
             if (this.value == null) {
-                Debug.warn("Config field value is null");
+                Log.warn("Config field value is null");
                 return Optional.empty();
             }
 
@@ -321,11 +321,11 @@ public class XideConfig {
                     if (list.stream().allMatch(e -> e instanceof String)) {
                         yield Optional.of(new StringArrayValue(list.toArray(new String[0])));
                     }
-                    Debug.warn("Only string arrays are supported");
+                    Log.warn("Only string arrays are supported");
                     yield Optional.empty();
                 }
                 default -> {
-                    Debug.warn("Unsupported type: " + this.value.getClass().getSimpleName());
+                    Log.warn("Unsupported type: " + this.value.getClass().getSimpleName());
                     yield Optional.empty();
                 }
             };

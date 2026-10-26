@@ -6,7 +6,7 @@ import org.xast.xide.core.PluginManager
 import org.xast.xide.core.Workspace
 import org.xast.xide.core.config.XideConfig
 import org.xast.xide.core.event.EventBus
-import org.xast.xide.core.utils.Debug
+import org.xast.xide.core.log.Log
 import org.xast.xide.ui.MainFrame
 import org.xast.xide.ui.utils.XideStyle
 
@@ -19,7 +19,7 @@ object Main:
 
         val workspace = Workspace.init(args)
         if workspace.hasMultipleDirs then
-            Debug.error("Workspace cannot contains multiple folders")
+            Log.error("Workspace cannot contains multiple folders")
             System.exit(-1)
 
         val eventBus = new EventBus()

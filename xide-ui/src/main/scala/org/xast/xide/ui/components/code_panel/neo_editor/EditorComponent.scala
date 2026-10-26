@@ -4,7 +4,8 @@ import java.awt.{Cursor, Font, Graphics2D, Rectangle, Toolkit}
 import java.awt.datatransfer.{StringSelection, DataFlavor}
 import javax.swing.Timer
 
-import org.xast.xide.core.utils.Debug
+import org.xast.xide.core.log.Log
+import org.xast.xide.core.utils.|>
 import org.xast.xide.ui.components.code_panel.neo_editor.*
 
 import scala.swing.Component
@@ -79,7 +80,7 @@ class EditorComponent(
                .setContents(new StringSelection(text), null)
          catch
             case e: Exception =>
-               Debug.error("Selection copy failed: " + e)
+               Log.error("Selection copy failed: " + e)
 
       case Effect.RequestPaste => 
          try
@@ -91,7 +92,7 @@ class EditorComponent(
             dispatch(EditorAction.Paste(text))
          catch
             case e: Exception =>
-               Debug.error("Paste failed: " + e)
+               Log.error("Paste failed: " + e)
 
       case Effect.TextChanged => onTextChange()
 
